@@ -12,7 +12,10 @@ class HTMLNode():
     def props_to_html(self):
         if not self.props:
             return ""
-        return (f'href={self.props["href"]} target={self.props["target"]}')
+        output = ""
+        for item in self.props:
+            output = f'{output} {item}="{self.props[item]}"'
+        return output
     
     def __repr__(self):
         return (f"HTLMLNode({self.tag}, {self.value}, {self.children}, {self.props})")    
