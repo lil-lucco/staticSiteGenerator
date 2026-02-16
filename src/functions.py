@@ -71,7 +71,7 @@ def extract_markdown_images(text):
     # text = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
     # print(extract_markdown_images(text))        
     # [("rick roll", "https://i.imgur.com/aKaOqIh.gif"), ("obi wan", "https://i.imgur.com/fJRm4Vk.jpeg")]
-    pass
+    return re.findall(r"!\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
 
 def extract_markdown_links(text):
     # same as above but with HUYAHH
@@ -80,4 +80,92 @@ def extract_markdown_links(text):
     # text = "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
     # print(extract_markdown_links(text))
     # [("to boot dev", "https://www.boot.dev"), ("to youtube", "https://www.youtube.com/@bootdotdev")]
-    pass
+    return re.findall(r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
+
+def split_nodes_image(old_nodes):
+    # Should behave similarly to split_nodes_delimiter but no delimiter or text type as input
+    result = []
+    for old_node in old_nodes:
+        if old_node.text_type != TextType.TEXT:
+            result.append(old_node)
+            continue
+
+        extracted_images = extract_markdown_images(old_node.text)
+        if not extracted_images:
+            result.append(old_node)
+            continue
+
+        remaining_text = old_node.text
+
+        for alt_text, url in extracted_images:
+            image_markdown = f"![{alt_text}]({url})"
+            text = remaining_text.split(image_markdown, maxsplit=1)
+            if text[0] != "":
+                result.append(TextNode(text[0], TextType.TEXT))
+            result.append(TextNode(alt_text, TextType.IMAGE, url))
+            
+            remaining_text = text[1]
+        
+        if remaining_text:
+            result.append(TextNode(remaining_text, TextType.TEXT))
+            
+    return result
+
+
+def split_nodes_link(old_nodes):
+    result = []
+    for old_node in old_nodes:
+        if old_node.text_type != TextType.TEXT:
+            result.append(old_node)
+            continue
+
+        extracted_links = extract_markdown_links(old_node.text)
+        if not extracted_links:
+            result.append(old_node)
+            continue
+
+        remaining_text = old_node.text
+
+        for alt_text, url in extracted_links:
+            text_markdown = f"[{alt_text}]({url})"
+            text = remaining_text.split(text_markdown, maxsplit=1)
+            if text[0] != "":
+                result.append(TextNode(text[0], TextType.TEXT))
+            result.append(TextNode(alt_text, TextType.LINK, url))
+            
+            remaining_text = text[1]
+        
+        if remaining_text:
+            result.append(TextNode(remaining_text, TextType.TEXT))
+            
+    return result
+
+def text_to_textnodes(text):
+# example input: 
+# This is **text** with an _italic_ word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)
+# example output (list of TextNodes):
+# [
+#     TextNode("This is ", TextType.TEXT),
+#     TextNode("text", TextType.BOLD),
+#     TextNode(" with an ", TextType.TEXT),
+#     TextNode("italic", TextType.ITALIC),
+#     TextNode(" word and a ", TextType.TEXT),
+#     TextNode("code block", TextType.CODE),
+#     TextNode(" and an ", TextType.TEXT),
+#     TextNode("obi wan image", TextType.IMAGE, "https://i.imgur.com/fJRm4Vk.jpeg"),
+#     TextNode(" and a ", TextType.TEXT),
+#     TextNode("link", TextType.LINK, "https://boot.dev"),
+# ]
+    if isinstance(text, str):
+        nodes = [TextNode(text, TextType.TEXT)]
+    elif isinstance(text, list):
+        nodes = text
+    else:
+        raise TypeError("text_to_textnodes expects a str or list of TextNode")
+
+    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
+    nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+    nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
+    nodes = split_nodes_image(nodes)
+    nodes = split_nodes_link(nodes)
+    return nodes
