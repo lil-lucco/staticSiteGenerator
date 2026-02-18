@@ -1,7 +1,8 @@
 import unittest
 from textnode import TextNode, TextType
 from functions import *
-from blocks import markdown_to_blocks
+from blocks import BlockType, markdown_to_blocks, block_to_block_type
+from markdown_to_html_node import markdown_to_html_node
 
 
 class TestTextNode(unittest.TestCase):
@@ -333,7 +334,6 @@ class TestTextNode(unittest.TestCase):
             expected,
         )
 
-    # test to fix:
     def test_markdown_to_blocks(self):
         md = """
 This is **bolded** paragraph
@@ -345,13 +345,201 @@ This is the same paragraph on a new line
 - with items
 """
         blocks = markdown_to_blocks(md)
-        self.assertEqual(
+        expected = [
+            "This is **bolded** paragraph",
+            "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+            "- This is a list\n- with items",
+        ]
+        self._assert_with_failure_debug(
+            "test_markdown_to_blocks",
+            md,
             blocks,
-            [
-                "This is **bolded** paragraph",
-                "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
-                "- This is a list\n- with items",
-            ],
+            expected,
+        )
+
+    def test_block_to_block_type_paragraph(self):
+        block = "this is a normal paragraph."
+        result = block_to_block_type(block)
+        expected = BlockType.PARAGRAPH
+        self._assert_with_failure_debug(
+            "test_block_to_block_type_paragraph",
+            block,
+            result,
+            expected,
+        )
+
+    def test_block_to_block_type_heading(self):
+        block = "### This is a heading"
+        result = block_to_block_type(block)
+        expected = BlockType.HEADING
+        self._assert_with_failure_debug(
+            "test_block_to_block_type_heading",
+            block,
+            result,
+            expected,
+        )
+
+    def test_block_to_block_type_code(self):
+        block = "```\nprint('hello')\n```"
+        result = block_to_block_type(block)
+        expected = BlockType.CODE
+        self._assert_with_failure_debug(
+            "test_block_to_block_type_code",
+            block,
+            result,
+            expected,
+        )
+
+    def test_block_to_block_type_quote(self):
+        block = "> quoted line\n> another line"
+        result = block_to_block_type(block)
+        expected = BlockType.QUOTE
+        self._assert_with_failure_debug(
+            "test_block_to_block_type_quote",
+            block,
+            result,
+            expected,
+        )
+
+    def test_block_to_block_type_unordered_list(self):
+        block = "- item one\n- item two\n- item three"
+        result = block_to_block_type(block)
+        expected = BlockType.UNORDERED_LIST
+        self._assert_with_failure_debug(
+            "test_block_to_block_type_unordered_list",
+            block,
+            result,
+            expected,
+        )
+
+    def test_block_to_block_type_ordered_list(self):
+        block = "1. first\n2. second\n3. third"
+        result = block_to_block_type(block)
+        expected = BlockType.ORDERED_LIST
+        self._assert_with_failure_debug(
+            "test_block_to_block_type_ordered_list",
+            block,
+            result,
+            expected,
+        )
+
+    def test_block_to_block_type_invalid_ordered_list_is_paragraph(self):
+        block = "1. first\n3. third"
+        result = block_to_block_type(block)
+        expected = BlockType.PARAGRAPH
+        self._assert_with_failure_debug(
+            "test_block_to_block_type_invalid_ordered_list_is_paragraph",
+            block,
+            result,
+            expected,
+        )
+
+    def test_paragraphs(self):
+        md = """
+    This is **bolded** paragraph
+    text in a p
+    tag here
+
+    This is another paragraph with _italic_ text and `code` here
+
+    """
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        expected = (
+            "<div><p>This is <b>bolded</b> paragraph text in a p tag here</p>"
+            "<p>This is another paragraph with <i>italic</i> text and <code>code</code> here</p></div>"
+        )
+        self._assert_with_failure_debug(
+            "test_paragraphs",
+            md,
+            html,
+            expected,
+        )
+
+    def test_codeblock(self):
+        md = """
+    ```
+    This is text that _should_ remain
+    the **same** even with inline stuff
+    ```
+    """
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        expected = (
+            "<div><pre><code>This is text that _should_ remain\n"
+            "the **same** even with inline stuff\n</code></pre></div>"
+        )
+        self._assert_with_failure_debug(
+            "test_codeblock",
+            md,
+            html,
+            expected,
+        )
+
+    def test_markdown_to_html_heading_block(self):
+        md = "# Main Title"
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        expected = "<div><h1>Main Title</h1></div>"
+        self._assert_with_failure_debug(
+            "test_markdown_to_html_heading_block",
+            md,
+            html,
+            expected,
+        )
+
+    def test_markdown_to_html_quote_with_inline_formatting(self):
+        md = "> first line\n> second **line**"
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        expected = "<div><blockquote>first line second <b>line</b></blockquote></div>"
+        self._assert_with_failure_debug(
+            "test_markdown_to_html_quote_with_inline_formatting",
+            md,
+            html,
+            expected,
+        )
+
+    def test_markdown_to_html_unordered_list_with_inline_formatting(self):
+        md = "- one\n- two _emph_"
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        expected = "<div><ul><li>one</li><li>two <i>emph</i></li></ul></div>"
+        self._assert_with_failure_debug(
+            "test_markdown_to_html_unordered_list_with_inline_formatting",
+            md,
+            html,
+            expected,
+        )
+
+    def test_markdown_to_html_ordered_list_block(self):
+        md = "1. alpha\n2. beta\n3. gamma"
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        expected = "<div><ol><li>alpha</li><li>beta</li><li>gamma</li></ol></div>"
+        self._assert_with_failure_debug(
+            "test_markdown_to_html_ordered_list_block",
+            md,
+            html,
+            expected,
+        )
+
+    def test_markdown_to_html_mixed_blocks(self):
+        md = "# Title\n\n> quote line\n\n- item one\n- item two\n\nplain `code` text"
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        expected = (
+            "<div><h1>Title</h1><blockquote>quote line</blockquote>"
+            "<ul><li>item one</li><li>item two</li></ul>"
+            "<p>plain <code>code</code> text</p></div>"
+        )
+        self._assert_with_failure_debug(
+            "test_markdown_to_html_mixed_blocks",
+            md,
+            html,
+            expected,
         )
 
 if __name__ == "__main__":
