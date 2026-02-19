@@ -1,6 +1,6 @@
 import unittest
 
-from htmlnode import HTMLNode
+from nodes_and_blocks.htmlnode import HTMLNode
 
 
 class TestHTMLNode(unittest.TestCase):
@@ -11,10 +11,12 @@ class TestHTMLNode(unittest.TestCase):
             "target": "_blank",
         }
         node.props_to_html()
+
     def test_no_props(self):
         node = HTMLNode()
         node.props = None
         node.props_to_html()
+
 
 if __name__ == "__main__":
     unittest.main()

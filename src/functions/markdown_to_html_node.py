@@ -1,13 +1,17 @@
-from textnode import TextType, TextNode
-from functions import text_to_textnodes, text_node_to_html_node
-from parentnode import ParentNode
-from blocks import BlockType, markdown_to_blocks, block_to_block_type
+from nodes_and_blocks.textnode import TextType, TextNode
+from nodes_and_blocks.parentnode import ParentNode
+from nodes_and_blocks.block_type import BlockType
+from nodes_and_blocks.markdown_to_blocks import markdown_to_blocks
+from nodes_and_blocks.block_to_block_type import block_to_block_type
+from functions.text_to_textnodes import text_to_textnodes
+from functions.text_node_to_html_node import text_node_to_html_node
+
 
 def markdown_to_html_node(markdown):
 # Converts a full markdown document into a single parent HTMLNode.
 # That one parent HTMLNode should (obviously) contain many child HTMLNode objects representing the nested elements.
 
-    
+
     blocks = markdown_to_blocks(markdown)
     parent_children = []
     for block in blocks:
@@ -36,9 +40,9 @@ def markdown_to_html_node(markdown):
                 block_children.append(ParentNode("li", clean_text))
             parent_children.append(ParentNode("ul", block_children))
 # Ordered list blocks should be surrounded by a <ol> tag, and each list item should be surrounded by a <li> tag.
-# For UNORDERED_LIST and ORDERED_LIST, you're currently treating the entire block as one set of children. 
+# For UNORDERED_LIST and ORDERED_LIST, you're currently treating the entire block as one set of children.
 # However, the instructions say that each list item should be surrounded by a <li> tag.
-# How might you split that block into individual lines and wrap each line in its own ParentNode("li", ...) 
+# How might you split that block into individual lines and wrap each line in its own ParentNode("li", ...)
 # before putting them inside the <ul> or <ol>?
         elif blocktype == BlockType.ORDERED_LIST:
             parts = block.split("\n")
@@ -61,22 +65,22 @@ def markdown_to_html_node(markdown):
             n = 0
             while n < len(block) and block[n] == "#":
                 n += 1
-            block_children = inline_text_to_children(block[n:].lstrip())            
+            block_children = inline_text_to_children(block[n:].lstrip())
             parent_children.append(ParentNode(f"h{min(n, 6)}", block_children))
 # Paragraphs should be surrounded by a <p> tag. I removed the newlines and replaced them with spaces.
         elif blocktype == BlockType.PARAGRAPH:
             lines = block.split("\n")
-            clean_lines = [ln.lstrip() for ln in lines]            
+            clean_lines = [ln.lstrip() for ln in lines]
             text = " ".join(clean_lines)
             block_children = inline_text_to_children(text)
             parent_children.append(ParentNode("p", block_children))
 
-    return ParentNode("div", parent_children) 
+    return ParentNode("div", parent_children)
 
-# Helper: “inline text to children”
+
 def inline_text_to_children(block):
 # For paragraph/heading/list items/quote you should:
-#     turn the block’s text into TextNodes (your text_to_textnodes)
+#     turn the block's text into TextNodes (your text_to_textnodes)
 #     then convert each TextNode to an HTML node (text_node_to_html_node)
 #     that list becomes the children of the block ParentNode
     textnodes = text_to_textnodes(block)

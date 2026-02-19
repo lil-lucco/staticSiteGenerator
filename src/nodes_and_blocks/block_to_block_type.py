@@ -1,22 +1,5 @@
-from functions import *
-from enum import Enum
+from nodes_and_blocks.block_type import BlockType
 
-def markdown_to_blocks(markdown):
-    raw_blocks = markdown.split("\n\n")
-    blocks = []
-    for block in raw_blocks:
-        stripped = block.strip()
-        if stripped != "":
-            blocks.append(stripped)
-    return blocks
-
-class BlockType(Enum):
-    PARAGRAPH = "paragraph"
-    HEADING = "heading"
-    CODE = "code"
-    QUOTE = "quote"
-    UNORDERED_LIST = "unordered_list"
-    ORDERED_LIST = "ordered_list"
 
 def block_to_block_type(text):
     # Takes a single block of markdown text as input and returns the BlockType representing the type of block it is
@@ -44,7 +27,3 @@ def block_to_block_type(text):
                 return BlockType.PARAGRAPH
         return BlockType.ORDERED_LIST
     return BlockType.PARAGRAPH
-            
-            
-
-    
