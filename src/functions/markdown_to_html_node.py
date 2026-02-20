@@ -10,8 +10,6 @@ from functions.text_node_to_html_node import text_node_to_html_node
 def markdown_to_html_node(markdown):
 # Converts a full markdown document into a single parent HTMLNode.
 # That one parent HTMLNode should (obviously) contain many child HTMLNode objects representing the nested elements.
-
-
     blocks = markdown_to_blocks(markdown)
     parent_children = []
     for block in blocks:
