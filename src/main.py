@@ -1,10 +1,13 @@
 from functions.copy_dir import copy_dir
 from functions.generate_page import generate_pages_recursive
+import sys
+from pathlib import Path
 
 
 def main():
-    source_dir = "/home/luca/workspace/bootdotdev/10_site_generator/static"
-    dest_dir = "/home/luca/workspace/bootdotdev/10_site_generator/public"
+    project_root = Path(__file__).resolve().parents[1]
+    source_dir = project_root / "static"
+    dest_dir = project_root / "docs"
     
     print(f"Copying {source_dir} files to {dest_dir}\n")
     try:    
@@ -12,13 +15,22 @@ def main():
     except Exception as e:
         raise Exception("copy failed") from e
     
-    from_path = "/home/luca/workspace/bootdotdev/10_site_generator/content/"
-    template_path = "/home/luca/workspace/bootdotdev/10_site_generator/template.html"
-    dest_path = "/home/luca/workspace/bootdotdev/10_site_generator/public/"
-    # Change your main function to use generate_pages_recursive instead of generate_page. 
-    # You should generate a page for every markdown file in the content directory 
-    # and write the results to the public directory.
-    generate_pages_recursive(from_path, template_path, dest_path)
+    from_path = project_root / "content"
+    template_path = project_root / "template.html"
+    dest_path = project_root / "docs"
+
+    if len(sys.argv) > 1:
+        basepath = sys.argv[1]
+    else:
+        basepath = "/"
+
+    if not basepath.startswith("/"):
+        basepath = f"/{basepath}"
+    if basepath != "/" and not basepath.endswith("/"):
+        basepath = f"{basepath}/"
+
+    generate_pages_recursive(from_path, template_path, dest_path, basepath)
 
 
-main()
+if __name__ == "__main__":
+    main()
